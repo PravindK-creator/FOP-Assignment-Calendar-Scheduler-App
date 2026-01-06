@@ -14,6 +14,7 @@ import java.util.*;//import utility classes like list and ArrayList
 public class EventManager {
     private static final String EVENT_FILE="event.csv";
     //constant for event file name.Using relative path so it works on any pc
+    private List<Event> events=new ArrayList<>();
     
     //method to create and save a new event into event.csv
     public void createEvent(Event event){
@@ -199,6 +200,92 @@ public void deleteEvent(int eventId) {
     }
     return null; // if not found
 }
+    
+    // ================= Recurring Events Support =================
+
+// Store recurring event rules
+private List<RecurringEvent> recurringEvents = new ArrayList<>();
+
+// Load recurring events from CSV file
+public void loadRecurringEvents(String filename) {
+    try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            RecurringEvent re = RecurringEvent.fromCSV(line);
+            if (re != null) recurringEvents.add(re);
+        }
+    } catch (IOException e) {
+        System.err.println("Error loading recurring events: " + e.getMessage());
+    }
+}
+
+// Save recurring events to CSV file
+public void saveRecurringEvents(String filename) {
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+        for (RecurringEvent re : recurringEvents) {
+            writer.write(re.toCSV());
+            writer.newLine();
+        }
+    } catch (IOException e) {
+        System.err.println("Error saving recurring events: " + e.getMessage());
+    }
+}
+
+// Add a new recurring event rule
+public void addRecurringEvent(int eventId, String interval, int times, LocalDateTime endDate) {
+    RecurringEvent re = new RecurringEvent(eventId, interval, times, endDate);
+    recurringEvents.add(re);
+}
+
+// Expand recurring events into actual Event instances
+public void expandRecurringEvents() {
+    for (RecurringEvent re : recurringEvents) {
+        Event base = findEventById(re.getEventId());
+        if (base == null) {
+            System.err.println("Base event not found for ID: " + re.getEventId());
+            continue;
+        }
+
+        LocalDateTime dateTime = base.getDateTime(); // assumes Event has getDateTime()
+        int count = 0;
+
+        while (true) {
+            if (count > 0) {
+                // Create a copy of the base event with new dateTime
+                Event copy = new Event(base.getTitle(), base.getDescription(), dateTime);
+                events.add(copy);
+            }
+
+            count++;
+            if (re.getRecurrentTimes() > 0 && count >= re.getRecurrentTimes()) break;
+            if (re.getRecurrentEndDate() != null && dateTime.isAfter(re.getRecurrentEndDate())) break;
+
+            dateTime = incrementDateTime(dateTime, re.getRecurrentInterval());
+        }
+    }
+}
+
+// Helper method to increment LocalDateTime based on recurrence interval
+private LocalDateTime incrementDateTime(LocalDateTime dateTime, String interval) {
+    switch (interval) {
+        case "1d": return dateTime.plusDays(1);
+        case "1w": return dateTime.plusWeeks(1);
+        case "2w": return dateTime.plusWeeks(2);
+        case "1m": return dateTime.plusMonths(1);
+        default:
+            System.err.println("Unknown interval: " + interval);
+            return dateTime;
+    }
+}
+
+// Helper to find event by ID (adjust if your Event uses a different getter)
+private Event findEventById(int id) {
+    for (Event e : events) {
+        if (e.getEventId() == id) return e;
+    }
+    return null;
+}
+
 
 }
 

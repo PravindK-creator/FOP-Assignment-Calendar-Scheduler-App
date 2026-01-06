@@ -20,6 +20,7 @@ public class Event {
     private String description;//details and explanation of the event
     private LocalDateTime startDateTime;//store exact date and time when the event starts
     private LocalDateTime endDateTime;//store exact date and time when the event ends
+    private LocalDateTime dateTime;
     private static int counter=0;//auto increment counter
     
     //add contructor
@@ -40,6 +41,13 @@ public class Event {
         this.description=description;
         this.startDateTime=startDateTime;
         this.endDateTime=endDateTime;
+    }
+    
+    public Event(String title, String description, LocalDateTime dateTime){
+        this.title=title;
+        this.description=description;
+        this.dateTime=dateTime;
+        this.eventId=++counter;
     }
     
     //add getter & setters
@@ -109,4 +117,9 @@ public class Event {
         }
   
     }
+    
+    public LocalDateTime getDateTime(){
+        return dateTime;
+    }
+    
 }
