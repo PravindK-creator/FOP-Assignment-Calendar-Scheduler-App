@@ -9,11 +9,12 @@ package calendar;
  * @author pravi
  */
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class RecurringEvent {
-    private int eventId;                // ID of the base event
-    private String recurrentInterval;   // e.g. "1d", "1w", "2w", "1m"
-    private int recurrentTimes;         // number of repetitions (0 = unlimited until endDate)
+    private int eventId;                 // ID of the base event
+    private String recurrentInterval;    // e.g. "1d", "1w", "1m"
+    private int recurrentTimes;          // number of occurrences (0 if using end date)
     private LocalDateTime recurrentEndDate; // optional end date
 
     // Constructor
@@ -24,33 +25,55 @@ public class RecurringEvent {
         this.recurrentEndDate = endDate;
     }
 
-    // Getters
-    public int getEventId() { 
-        return eventId; }
-    public String getRecurrentInterval() { 
-        return recurrentInterval; }
-    public int getRecurrentTimes() { 
-        return recurrentTimes; }
-    public LocalDateTime getRecurrentEndDate() { 
-        return recurrentEndDate; }
+    // Getters & Setters
+    public int getEventId() { return eventId; }
+    public void setEventId(int eventId) { this.eventId = eventId; }
 
-    // Convert to CSV string
-    public String toCSV() {
-        return eventId + "," + recurrentInterval + "," + recurrentTimes + "," +
-               (recurrentEndDate != null ? recurrentEndDate.toString() : "");
+    public String getRecurrentInterval() { return recurrentInterval; }
+    public void setRecurrentInterval(String recurrentInterval) { this.recurrentInterval = recurrentInterval; }
+
+    public int getRecurrentTimes() { return recurrentTimes; }
+    public void setRecurrentTimes(int recurrentTimes) { this.recurrentTimes = recurrentTimes; }
+
+    public LocalDateTime getRecurrentEndDate() { return recurrentEndDate; }
+    public void setRecurrentEndDate(LocalDateTime recurrentEndDate) { this.recurrentEndDate = recurrentEndDate; }
+
+    // Nicely formatted string output
+    @Override
+    public String toString() {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        return "RecurringEvent{" +
+                "eventId=" + eventId +
+                ", interval='" + recurrentInterval + '\'' +
+                ", times=" + recurrentTimes +
+                ", endDate=" + (recurrentEndDate != null ? recurrentEndDate.format(fmt) : "none") +
+                '}';
     }
 
-    // Parse from CSV string
+    // CSV export (using | delimiter for safety)
+    public String toCSV() {
+        return eventId + "|" + recurrentInterval + "|" + recurrentTimes + "|" +
+               (recurrentEndDate != null ? recurrentEndDate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : "");
+    }
+
+    // CSV import
     public static RecurringEvent fromCSV(String line) {
         try {
-            String[] parts = line.split(",");
-            int eventId = Integer.parseInt(parts[0]);
-            String interval = parts[1];
-            int times = Integer.parseInt(parts[2]);
-            LocalDateTime endDate = parts[3].isEmpty() ? null : LocalDateTime.parse(parts[3]);
-            return new RecurringEvent(eventId, interval, times, endDate);
-        } catch (Exception e) {
-            System.err.println("Error parsing recurring event: " + e.getMessage());
+            String[] parts = line.contains("|") ? line.split("\\|") : line.split(",");
+            if (parts.length < 3) {
+                throw new IllegalArgumentException("Invalid CSV line: " + line);
+            }
+            int id = Integer.parseInt(parts[0].trim());
+            String interval = parts[1].trim();
+            int times = Integer.parseInt(parts[2].trim());
+            LocalDateTime endDate = null;
+            if (parts.length > 3 && !parts[3].trim().isEmpty()) {
+                endDate = LocalDateTime.parse(parts[3].trim(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            }
+            return new RecurringEvent(id, interval, times, endDate);
+        } catch (Exception ex) {
+            System.err.println("Error parsing recurring CSV line: " + line);
+            ex.printStackTrace();
             return null;
         }
     }

@@ -7,9 +7,7 @@ package calendar;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
@@ -24,6 +22,10 @@ public class Main {
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public static void main(String[] args) {
+        // ✅ Load existing events and recurring rules at startup
+        manager.loadEvents("event.csv");
+        manager.loadRecurringEvents("recurring.csv");
+
         boolean running = true;
 
         while (running) {
@@ -34,7 +36,10 @@ public class Main {
             System.out.println("4. View All Events");
             System.out.println("5. Get Next Event");
             System.out.println("6. Trigger Reminders");
-            System.out.println("7. Clear CSV File");
+            System.out.println("7. Clear Event CSV File");
+            System.out.println("8. Add Recurring Event");
+            System.out.println("9. Expand Recurring Event");
+            System.out.println("10. Clear Recurring CSV File");
             System.out.println("0. Exit");
             System.out.print("Choose an option: ");
 
@@ -60,7 +65,16 @@ public class Main {
                     manager.scheduleReminders();
                     break;
                 case "7":
-                    clearCSV();
+                    clearEventCSV();
+                    break;
+                case "8":
+                    addRecurringEvent();
+                    break;
+                case "9":
+                    expandRecurringEvent();
+                    break;
+                case "10":
+                    clearRecurringCSV();
                     break;
                 case "0":
                     running = false;
@@ -92,19 +106,19 @@ public class Main {
         System.out.print("Event ID to update: ");
         int id = Integer.parseInt(scanner.nextLine());
 
-        System.out.print("New Title: ");
-        String title = scanner.nextLine();
-        System.out.print("New Description: ");
-        String description = scanner.nextLine();
-
         Event original = manager.getEventById(id);
         if (original == null) {
             System.out.println("Event not found.");
             return;
         }
 
-        Event updated = new Event(title, description, original.getStartDateTime(), original.getEndDateTime());
-        updated.setEventId(id);
+        System.out.print("New Title: ");
+        String title = scanner.nextLine();
+        System.out.print("New Description: ");
+        String description = scanner.nextLine();
+
+        Event updated = new Event(id, title, description,
+        original.getStartDateTime(), original.getEndDateTime());
         manager.updateEvent(id, updated);
         System.out.println("Event updated.");
     }
@@ -137,9 +151,34 @@ public class Main {
         }
     }
 
-    private static void clearCSV() {
+    private static void clearEventCSV() {
         manager.clearEventsFile();
-        System.out.println("CSV file cleared.");
+        System.out.println("Event CSV file cleared.");
     }
-}
 
+    private static void addRecurringEvent() {
+        System.out.print("Event ID to make recurring: ");
+        int id = Integer.parseInt(scanner.nextLine());
+        System.out.print("Interval (e.g. 1d, 1w, 1m): ");
+        String interval = scanner.nextLine();
+        System.out.print("Number of times (0 if using end date): ");
+        int times = Integer.parseInt(scanner.nextLine());
+
+        System.out.print("End date (yyyy-MM-dd HH:mm) or leave blank: ");
+        String endInput = scanner.nextLine();
+        LocalDateTime endDate = endInput.isEmpty() ? null : LocalDateTime.parse(endInput, formatter);
+
+        manager.addRecurringEvent(id, interval, times, endDate);
+    }
+
+    private static void expandRecurringEvent() {
+        manager.expandRecurringEvents();
+        System.out.println("Recurring events expanded into actual event instances");
+    }
+    
+    private static void clearRecurringCSV() {
+        manager.clearRecurringFile();
+        System.out.println("Recurring CSV file cleared.");
+    }
+
+}

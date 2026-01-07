@@ -12,202 +12,215 @@ import java.io.*;//import java I/O for reading/writing files
 import java.time.LocalDateTime;//import LocalDateTime class for handling date/time
 import java.util.*;//import utility classes like list and ArrayList
 public class EventManager {
-    private static final String EVENT_FILE="event.csv";
-    //constant for event file name.Using relative path so it works on any pc
-    private List<Event> events=new ArrayList<>();
-    
-    //method to create and save a new event into event.csv
-    public void createEvent(Event event){
-        int newId=getNextEventId();//generate new eventId by checking the files
-        event.setEventId(newId);//assign auto generated ID to event
-        if(event.getEndDateTime().isBefore(event.getStartDateTime())){
+    private static final String EVENT_FILE = "event.csv";
+    private static final String RECURRING_FILE = "recurring.csv";
+
+    private List<Event> events = new ArrayList<>();
+    private List<RecurringEvent> recurringEvents = new ArrayList<>();
+
+    // ================= Event Management =================
+
+    // Create and save a new event
+    public void createEvent(Event event) {
+        int newId = getNextEventId();
+        event.setEventId(newId);
+
+        if (event.getEndDateTime().isBefore(event.getStartDateTime())) {
             throw new IllegalArgumentException("End time must be after start time");
         }
-        
-        try(BufferedWriter bw=new BufferedWriter(new FileWriter(EVENT_FILE, true))){
-            //write event details in CSV format.
+
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(EVENT_FILE, true))) {
             bw.write(event.toCSV());
-            
-            //move to the next line for the next event
             bw.newLine();
-            System.out.println("Event created successfully: "+event);
+            System.out.println("Event created successfully: " + event);
+        } catch (IOException e) {
+            System.err.println("Error writing event: " + e.getMessage());
         }
-        catch(IOException e){
-            e.printStackTrace();//Print error if file writing fails
-        }
-        
+
+        events.add(event);
     }
-    
-        //helper method to get the next eventId
-        private int getNextEventId(){//reads the file, finds the highestID, and add 1
-            int maxId=0;
-            try(BufferedReader br=new BufferedReader(new FileReader(EVENT_FILE))){
-                String line;
-                while((line=br.readLine())!=null){
-                    String []parts=line.split(",");
-                    //Split CSV line into fields
-                    int id=Integer.parseInt(parts[0]);
-                    //First column is eventId
-                    if(id>maxId){
-                        maxId=id;
+
+    // Get next event ID
+    private int getNextEventId() {
+        int maxId = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader(EVENT_FILE))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split("\\|");
+                int id = Integer.parseInt(parts[0]);
+                if (id > maxId) maxId = id;
+            }
+        } catch (IOException e) {
+            // file may not exist yet
+        }
+        return maxId + 1;
+    }
+
+    // Update event
+    public void updateEvent(int eventId, Event updatedEvent) {
+        List<Event> temp = new ArrayList<>();
+        if (updatedEvent.getEndDateTime().isBefore(updatedEvent.getStartDateTime())) {
+            throw new IllegalArgumentException("End time must be after start time");
+        }
+
+        try (BufferedReader br = new BufferedReader(new FileReader(EVENT_FILE))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                Event e = Event.fromCSV(line);
+                if (e != null) {
+                    if (e.getEventId() == eventId) {
+                        temp.add(updatedEvent);
+                    } else {
+                        temp.add(e);
                     }
                 }
             }
-            catch(IOException e){
-                //if file doesnt exist yet,first event will get ID=1
+        } catch (IOException e) {
+            System.err.println("Error reading events: " + e.getMessage());
+        }
+
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(EVENT_FILE))) {
+            for (Event e : temp) {
+                bw.write(e.toCSV());
+                bw.newLine();
             }
-            return maxId +1;
+            System.out.println("Event updated successfully: " + updatedEvent);
+        } catch (IOException e) {
+            System.err.println("Error writing events: " + e.getMessage());
         }
-        
-        //Method to update an existing event
-        //Reads all event, replaces the one that matches eventId
-        // Method to update an existing event
-public void updateEvent(int eventId, Event updatedEvent) {
-    List<Event> events = new ArrayList<>();
-    // Temporary list to store all events.
-    if(updatedEvent.getEndDateTime().isBefore(updatedEvent.getStartDateTime())){
-            throw new IllegalArgumentException("End time must be after start time");
-    }
-    
-    try(BufferedReader br=new BufferedReader(new FileReader(EVENT_FILE))){
-        String line;
-        while((line=br.readLine()) != null){
-            Event e=Event.fromCSV(line);
-            if(e != null){
-                if(e.getEventId()==eventId){
-                    events.add(updatedEvent);//replace with updated
-                }
-                else{
-                    events.add(e);//remain the same no changes
-                }
-            }
-        }
-    }
-    catch(IOException e){
-        e.printStackTrace();
-    }
-    
-    try(BufferedWriter bw=new BufferedWriter(new FileWriter(EVENT_FILE))){
-        for(Event e:events){
-            bw.write(e.toCSV());
-            bw.newLine();
-        }
-        System.out.println("Event updated successfully: "+updatedEvent);
-    }
-    catch(IOException e){
-        e.printStackTrace();
-    }
-    
-}
 
-// Method to delete an existing event
-public void deleteEvent(int eventId) {
-    List<Event> events = new ArrayList<>();
-    // Temporary list to store all events except the one to delete.
-
-    try (BufferedReader br = new BufferedReader(new FileReader(EVENT_FILE))) {
-        String line;
-        while ((line = br.readLine()) != null) {
-            Event e=Event.fromCSV(line);
-            if(e!=null && e.getEventId()!=eventId){
-                events.add(e);
-            }
-        }
-    } catch (IOException e) {
-        e.printStackTrace();
+        this.events = temp;
     }
 
-    // Rewrite the file without the deleted event
-    try (BufferedWriter bw = new BufferedWriter(new FileWriter(EVENT_FILE))) {
-        for (Event e : events) {
-            bw.write(e.toCSV());
-            bw.newLine();
-        }
-        System.out.println("Event deleted successfully: ID " + eventId);
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
-}
-
-//method to get all the events
-    public List<Event> getAllEvents(){
-        List<Event> events=new ArrayList<>();
-        try(BufferedReader br=new BufferedReader(new FileReader(EVENT_FILE))){
+    // Delete event
+    public void deleteEvent(int eventId) {
+        List<Event> temp = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(EVENT_FILE))) {
             String line;
-            while((line=br.readLine()) != null){
-                Event e=Event.fromCSV(line);
-                if(e!=null){
-                    events.add(e);
+            while ((line = br.readLine()) != null) {
+                Event e = Event.fromCSV(line);
+                if (e != null && e.getEventId() != eventId) {
+                    temp.add(e);
                 }
             }
+        } catch (IOException e) {
+            System.err.println("Error reading events: " + e.getMessage());
         }
-        catch(IOException e){
-            e.printStackTrace();
+
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(EVENT_FILE))) {
+            for (Event e : temp) {
+                bw.write(e.toCSV());
+                bw.newLine();
+            }
+            System.out.println("Event deleted successfully: ID " + eventId);
+        } catch (IOException e) {
+            System.err.println("Error writing events: " + e.getMessage());
         }
-        return events;
+
+        this.events = temp;
     }
-    
-    //method to find the nearest upcoming event
-    public Event getNextEvent(){
-        List<Event> events=getAllEvents();
-        LocalDateTime now=LocalDateTime.now();
-        Event nextEvent=null;
-        
-        for(Event e: events){
-            if(e.getStartDateTime().isAfter(now)){
-                if(nextEvent==null || e.getStartDateTime().isBefore(nextEvent.getStartDateTime())){
-                    nextEvent=e;
+
+    // Get all events
+    public List<Event> getAllEvents() {
+        List<Event> temp = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(EVENT_FILE))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                Event e = Event.fromCSV(line);
+                if (e != null) temp.add(e);
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading events: " + e.getMessage());
+        }
+        this.events = temp;
+        return temp;
+    }
+
+    // Get next upcoming event
+    public Event getNextEvent() {
+        List<Event> all = getAllEvents();
+        LocalDateTime now = LocalDateTime.now();
+        Event nextEvent = null;
+
+        for (Event e : all) {
+            if (e.getStartDateTime().isAfter(now)) {
+                if (nextEvent == null || e.getStartDateTime().isBefore(nextEvent.getStartDateTime())) {
+                    nextEvent = e;
                 }
             }
         }
         return nextEvent;
     }
-    
-    //Reminder notification system
-    public void scheduleReminders(){
-        scheduleReminders(30);//set default 30 minutes before
+
+    // Reminders
+    public void scheduleReminders() {
+        scheduleReminders(30);
     }
-    
-    //Overloaded reminder system with custom minutes
-    public void scheduleReminders(int minutesBefore){
-        List<Event>events=getAllEvents();
-        LocalDateTime now=LocalDateTime.now();
-        
-        for(Event e: events){
-            LocalDateTime reminderTime=e.getStartDateTime().minusMinutes(minutesBefore);
-            if((reminderTime.isAfter(now))){
-                System.out.println("Reminder: Event '"+e.getTitle()+"' starts at "+e.getStartDateTime()+" ("+minutesBefore+" minutes left!)");
+
+    public void scheduleReminders(int minutesBefore) {
+        List<Event> all = getAllEvents();
+        LocalDateTime now = LocalDateTime.now();
+
+        for (Event e : all) {
+            LocalDateTime reminderTime = e.getStartDateTime().minusMinutes(minutesBefore);
+            if (reminderTime.isAfter(now)) {
+                System.out.println("Reminder: Event '" + e.getTitle() +
+                        "' starts at " + e.getStartDateTime() +
+                        " (" + minutesBefore + " minutes left!)");
             }
         }
     }
-    
-    //clears the csv file
-    public void clearEventsFile(){
-        try(PrintWriter pw=new PrintWriter(new FileWriter(EVENT_FILE))){
-            pw.print("");
-        }
-        catch(IOException e){
-            e.printStackTrace();
-        }
-    }
-    
-    public Event getEventById(int id) {
-    List<Event> events = getAllEvents();
-    for (Event e : events) {
-        if (e.getEventId() == id) {
-            return e;
-        }
-    }
-    return null; // if not found
-}
-    
-    // ================= Recurring Events Support =================
 
-// Store recurring event rules
-private List<RecurringEvent> recurringEvents = new ArrayList<>();
+    // Clear events file
+    public void clearEventsFile() {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(EVENT_FILE))) {
+            pw.print("");
+        } catch (IOException e) {
+            System.err.println("Error clearing events file: " + e.getMessage());
+        }
+        events.clear();  
+    }
+    
+    //clear recurring file
+    public void clearRecurringFile(){
+        try (PrintWriter pw = new PrintWriter(new FileWriter(RECURRING_FILE))) {
+            pw.print("");
+        } catch (IOException e) {
+            System.err.println("Error clearing events file: " + e.getMessage());
+        }
+        recurringEvents.clear();
+    }
+
+    // Get event by ID
+    public Event getEventById(int id) {
+        List<Event> all = getAllEvents();
+        for (Event e : all) {
+            if (e.getEventId() == id) return e;
+        }
+        return null;
+    }
+
+    // Load events from file
+    public void loadEvents(String filename) {
+        events.clear();
+        try (Scanner scanner = new Scanner(new File(filename))) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine().trim();
+                if (!line.isEmpty()) {
+                    Event e = Event.fromCSV(line);
+                    if (e != null) events.add(e);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading events: " + e.getMessage());
+        }
+    }
+    
+    // ================= Recurring Events =================
 
 // Load recurring events from CSV file
 public void loadRecurringEvents(String filename) {
+    recurringEvents.clear();
     try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
         String line;
         while ((line = reader.readLine()) != null) {
@@ -233,37 +246,74 @@ public void saveRecurringEvents(String filename) {
 
 // Add a new recurring event rule
 public void addRecurringEvent(int eventId, String interval, int times, LocalDateTime endDate) {
+    // Check if rule already exists
+    for (RecurringEvent re : recurringEvents) {
+        if (re.getEventId() == eventId &&
+            re.getRecurrentInterval().equals(interval) &&
+            re.getRecurrentTimes() == times &&
+            Objects.equals(re.getRecurrentEndDate(), endDate)) {
+            System.out.println("Recurring rule already exists for event " + eventId);
+            return;
+        }
+    }
+
     RecurringEvent re = new RecurringEvent(eventId, interval, times, endDate);
     recurringEvents.add(re);
+    saveRecurringEvents("recurring.csv");
+    System.out.println("Recurring rule added for event " + eventId);
 }
+
 
 // Expand recurring events into actual Event instances
 public void expandRecurringEvents() {
     for (RecurringEvent re : recurringEvents) {
-        Event base = findEventById(re.getEventId());
+        Event base = getEventById(re.getEventId());
         if (base == null) {
             System.err.println("Base event not found for ID: " + re.getEventId());
             continue;
         }
 
-        LocalDateTime dateTime = base.getDateTime(); // assumes Event has getDateTime()
+        LocalDateTime dateTime = base.getStartDateTime();
+        long durationMinutes = java.time.Duration.between(
+                base.getStartDateTime(), base.getEndDateTime()).toMinutes();
+
         int count = 0;
+        List<Event> existingEvents = getAllEvents(); // ✅ cache once
 
         while (true) {
+            if (re.getRecurrentEndDate() != null && !dateTime.isBefore(re.getRecurrentEndDate())) break;
+            if (re.getRecurrentTimes() > 0 && count >= re.getRecurrentTimes()) break;
+
             if (count > 0) {
-                // Create a copy of the base event with new dateTime
-                Event copy = new Event(base.getTitle(), base.getDescription(), dateTime);
-                events.add(copy);
+                boolean exists = false;
+                for (Event e : existingEvents) {
+                    if (e.getTitle().equals(base.getTitle()) &&
+                        e.getStartDateTime().equals(dateTime)) {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists) {
+                    Event copy = new Event(
+                        base.getTitle(),
+                        base.getDescription(),
+                        dateTime,
+                        dateTime.plusMinutes(durationMinutes)
+                    );
+                    createEvent(copy);
+                    existingEvents.add(copy); //update cache
+                } else {
+                    System.out.println("Skipped duplicate event on: " + dateTime);
+                }
             }
 
             count++;
-            if (re.getRecurrentTimes() > 0 && count >= re.getRecurrentTimes()) break;
-            if (re.getRecurrentEndDate() != null && dateTime.isAfter(re.getRecurrentEndDate())) break;
-
             dateTime = incrementDateTime(dateTime, re.getRecurrentInterval());
         }
     }
 }
+
 
 // Helper method to increment LocalDateTime based on recurrence interval
 private LocalDateTime incrementDateTime(LocalDateTime dateTime, String interval) {
@@ -276,14 +326,6 @@ private LocalDateTime incrementDateTime(LocalDateTime dateTime, String interval)
             System.err.println("Unknown interval: " + interval);
             return dateTime;
     }
-}
-
-// Helper to find event by ID (adjust if your Event uses a different getter)
-private Event findEventById(int id) {
-    for (Event e : events) {
-        if (e.getEventId() == id) return e;
-    }
-    return null;
 }
 
 
