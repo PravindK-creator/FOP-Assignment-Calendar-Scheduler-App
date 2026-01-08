@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 public class CalendarUtils {
-    // å®šä¹‰æ–‡ä»¶å��
     private static final String ADDITIONAL_FILE = "additional.csv";
     private static final String EVENT_FILE = "event.csv";
 

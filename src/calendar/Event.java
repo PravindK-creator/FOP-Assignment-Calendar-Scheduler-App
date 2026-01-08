@@ -23,8 +23,7 @@ public class Event {
     private static int counter = 0;      // auto-increment counter
 
     // Full constructor: used when we already know the eventId
-    public Event(int eventId, String title, String description,
-                 LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    public Event(int eventId, String title, String description,LocalDateTime startDateTime, LocalDateTime endDateTime) {
         this.eventId = eventId;
         this.title = title;
         this.description = description;
@@ -33,8 +32,7 @@ public class Event {
     }
 
     // Constructor without eventId (auto-generated)
-    public Event(String title, String description,
-                 LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    public Event(String title, String description,LocalDateTime startDateTime, LocalDateTime endDateTime) {
         this.eventId = ++counter;
         this.title = title;
         this.description = description;

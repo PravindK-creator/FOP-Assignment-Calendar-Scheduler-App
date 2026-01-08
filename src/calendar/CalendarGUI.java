@@ -173,7 +173,7 @@ public class CalendarGUI extends JFrame {
         sb.append("Events for ").append(date).append(":\n\n");
 
         for (Event e : events) {
-            sb.append("â—� ").append(e.getTitle())
+            sb.append("~").append(e.getTitle())
 
                     .append("\n   Time: ").append(e.getStartDateTime().format(timeFormatter))
                     .append("\n   Desc: ").append(e.getDescription()).append("\n\n");
