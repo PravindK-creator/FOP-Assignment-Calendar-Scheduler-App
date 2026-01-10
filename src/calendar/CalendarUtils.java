@@ -12,7 +12,6 @@ import java.util.*;
 public class CalendarUtils {
     private static final String ADDITIONAL_FILE = "additional.csv";
     private static final String EVENT_FILE = "event.csv";
-
     private static Map<Integer, String> additionalDataMap = new HashMap<>();
 
     public static void loadAdditionalData() {
@@ -22,7 +21,7 @@ public class CalendarUtils {
 
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
-            br.readLine(); // è·³è¿‡æ ‡é¢˜
+            br.readLine(); 
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
                 if (parts.length >= 4) {
@@ -30,6 +29,7 @@ public class CalendarUtils {
                     String loc = parts[1].trim();
                     String att = parts[2].trim();
                     String cat = parts[3].trim();
+     
                     String info = String.format(" [Loc: %s | Att: %s | Cat: %s]", loc, att, cat);
                     additionalDataMap.put(id, info);
                 }
@@ -40,24 +40,54 @@ public class CalendarUtils {
     }
 
     public static void saveAdditionalData(int eventId, String loc, String att, String cat) {
-        // æ›´æ–°å†…å­˜
         String info = String.format(" [Loc: %s | Att: %s | Cat: %s]", loc, att, cat);
         additionalDataMap.put(eventId, info);
-
-        // å†™å…¥æ–‡ä»¶
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(ADDITIONAL_FILE, true))) {
-            File file = new File(ADDITIONAL_FILE);
-            if (file.length() == 0) {
-                bw.write("eventId,location,attendees,category"); 
+        updateAdditionalFile(); // always rewrite cleanly
+    }
+    
+    private static void updateAdditionalFile() {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(ADDITIONAL_FILE))) {
+            bw.write("eventId,location,attendees,category");
+            bw.newLine();
+            for (Map.Entry<Integer, String> entry : additionalDataMap.entrySet()) {
+                int id = entry.getKey();
+                String info = entry.getValue();
+                String[] parts = info.replace("[", "").replace("]", "").split("\\|");
+                String loc = parts[0].replace("Loc:", "").trim();
+                String att = parts[1].replace("Att:", "").trim();
+                String cat = parts[2].replace("Cat:", "").trim();
+                bw.write(id + "," + loc + "," + att + "," + cat);
                 bw.newLine();
             }
-            bw.write(eventId + "," + loc + "," + att + "," + cat);
-            bw.newLine();
-        } catch (IOException e) {
-            System.err.println("Error saving additional data: " + e.getMessage());
+    }   catch (IOException e) {
+            System.err.println("Error updating additional.csv: " + e.getMessage());
         }
     }
+    
+    public static void updateAdditionalData(int eventId, String loc, String att, String cat) {
+        String info = String.format(" [Loc: %s | Att: %s | Cat: %s]", loc, att, cat);
+        additionalDataMap.put(eventId, info);
+        updateAdditionalFile();
+    }
 
+    public static void removeAdditionalData(int eventId) {
+        additionalDataMap.remove(eventId);
+        updateAdditionalFile();
+    }
+    
+    public static void copyAdditionalData(int sourceEventId, int targetEventId) {
+        String extraInfo = additionalDataMap.get(sourceEventId);
+        if (extraInfo != null) {
+            String[] parts = extraInfo.replace("[", "").replace("]", "").split("\\|");
+            String loc = parts[0].replace("Loc:", "").trim();
+            String att = parts[1].replace("Att:", "").trim();
+            String cat = parts[2].replace("Cat:", "").trim();
+            saveAdditionalData(targetEventId, loc, att, cat);
+        }
+    
+    
+    }
+    
     public static boolean hasConflict(LocalDateTime start, LocalDateTime end) {
         File file = new File(EVENT_FILE);
         if (!file.exists()) return false;
@@ -65,13 +95,14 @@ public class CalendarUtils {
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = br.readLine()) != null) {
+               
                 if (line.isEmpty() || !Character.isDigit(line.charAt(0))) continue;
 
                 Event e = Event.fromCSV(line); 
                 if (e != null) {
-                    // : (StartA < EndB) && (EndA > StartB)
+                  
                     if (start.isBefore(e.getEndDateTime()) && end.isAfter(e.getStartDateTime())) {
-                        System.out.println("â�Œ å†²çª�è­¦å‘Š: è¯¥æ—¶é—´æ®µä¸Žäº‹ä»¶ '" + e.getTitle() + "' é‡�å� ï¼�");
+                        System.out.println("Event created has conflict with event '" + e.getTitle()+"'");
                         return true;
                     }
                 }

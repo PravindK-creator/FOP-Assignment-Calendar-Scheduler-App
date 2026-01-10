@@ -54,7 +54,7 @@ public class CalendarGUI extends JFrame {
             calendarPanel = new JPanel();
             calendarPanel.setLayout(new GridLayout(0, 7));
             add(calendarPanel, BorderLayout.CENTER);
-
+           
             // 4. Initialize display
             refreshCalendar();
 

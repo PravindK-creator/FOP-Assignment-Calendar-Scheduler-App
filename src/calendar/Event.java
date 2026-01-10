@@ -20,6 +20,7 @@ public class Event {
     private String description;          // details and explanation of the event
     private LocalDateTime startDateTime; // exact date/time when the event starts
     private LocalDateTime endDateTime;   // exact date/time when the event ends
+    private int reminderMinutes;
     private static int counter = 0;      // auto-increment counter
 
     // Full constructor: used when we already know the eventId
@@ -39,34 +40,60 @@ public class Event {
         this.startDateTime = startDateTime;
         this.endDateTime = endDateTime;
     }
+    
+    //if customer wants to add reminder time
+    public Event(String title, String description,LocalDateTime startDateTime, LocalDateTime endDateTime, int reminderMinutes) {
+        this.eventId = ++counter;
+        this.title = title;
+        this.description = description;
+        this.startDateTime = startDateTime;
+        this.endDateTime = endDateTime;
+        this.reminderMinutes=reminderMinutes;
+    }
 
     // Getters & Setters
-    public int getEventId() { return eventId; }
-    public void setEventId(int eventId) { this.eventId = eventId; }
+    public int getEventId() { 
+        return eventId; }
+    public void setEventId(int eventId) { 
+        this.eventId = eventId; }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public String getTitle() { 
+        return title; }
+    public void setTitle(String title) { 
+        this.title = title; }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public String getDescription() { 
+        return description; }
+    public void setDescription(String description) { 
+        this.description = description; }
 
-    public LocalDateTime getStartDateTime() { return startDateTime; }
-    public void setStartDateTime(LocalDateTime startDateTime) { this.startDateTime = startDateTime; }
+    public LocalDateTime getStartDateTime() { 
+        return startDateTime; }
+    public void setStartDateTime(LocalDateTime startDateTime) { 
+        this.startDateTime = startDateTime; }
 
-    public LocalDateTime getEndDateTime() { return endDateTime; }
-    public void setEndDateTime(LocalDateTime endDateTime) { this.endDateTime = endDateTime; }
+    public LocalDateTime getEndDateTime() { 
+        return endDateTime; }
+    public void setEndDateTime(LocalDateTime endDateTime) { 
+        this.endDateTime = endDateTime; }
+    
+    public int getReminderMinutes(){
+        return reminderMinutes;
+    }
+    public void setReminderMinutes(int reminderMinutes){
+        this.reminderMinutes=reminderMinutes;
+    }
+    
+    //to get the reminder time
+    public LocalDateTime getReminderTime(){
+        return startDateTime.minusMinutes(reminderMinutes);
+    }
 
     // Nicely formatted string output
     @Override
     public String toString() {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-        return "Event{" +
-                "eventId=" + eventId +
-                ", title='" + title + '\'' +
-                ", description='" + description + '\'' +
-                ", startDateTime=" + startDateTime.format(fmt) +
-                ", endDateTime=" + endDateTime.format(fmt) +
-                '}';
+        return "Event{" +"eventId=" + eventId +", title='" + title + '\'' +", description='" + description + '\'' +", startDateTime=" + startDateTime.format(fmt) +", endDateTime=" + endDateTime.format(fmt) +'}';
     }
 
     // CSV export (using | delimiter for safety)

@@ -42,12 +42,7 @@ public class RecurringEvent {
     @Override
     public String toString() {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-        return "RecurringEvent{" +
-                "eventId=" + eventId +
-                ", interval='" + recurrentInterval + '\'' +
-                ", times=" + recurrentTimes +
-                ", endDate=" + (recurrentEndDate != null ? recurrentEndDate.format(fmt) : "none") +
-                '}';
+        return "RecurringEvent{" +"eventId=" + eventId +", interval='" + recurrentInterval + '\'' +", times=" + recurrentTimes +", endDate=" + (recurrentEndDate != null ? recurrentEndDate.format(fmt) : "none") +'}';
     }
 
     // CSV export (using | delimiter for safety)
