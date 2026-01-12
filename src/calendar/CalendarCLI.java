@@ -34,33 +34,33 @@ public void printMonthView(int year, int month) {
 
     LocalDate firstDay = ym.atDay(1);
 
-    // Sunday-first offset: Sunday=0, Monday=1, ..., Saturday=6
+    //Sunday-first offset: Sunday=0, Monday=1, ..., Saturday=6
     int offset = firstDay.getDayOfWeek().getValue() % 7;
 
-    // Print leading blanks (3 spaces per column)
+    //Print leading blanks (3 spaces per column)
     for (int i = 0; i < offset; i++) {
         System.out.print("   ");
     }
 
-    // Print each day of the month
+    //Print each day of the month
     for (int day = 1; day <= ym.lengthOfMonth(); day++) {
         LocalDate date = ym.atDay(day);
         boolean hasEvent = hasEventOnDate(date);
 
-        // Each cell is exactly 3 chars wide
+        //Each cell is exactly 3 spaces wide
         if (hasEvent) {
-            System.out.printf("%2d*", day);  // e.g. "10*"
+            System.out.printf("%2d*", day);  // e.g."10*"
         } else {
-            System.out.printf("%2d ", day);  // e.g. " 1 "
+            System.out.printf("%2d ", day);  // e.g."1"
         }
 
-        // Break line after Saturday
+        //Break line after Saturday
         if ((day + offset) % 7 == 0) {
             System.out.println();
         }
     }
 
-    System.out.println(); // Final newline
+    System.out.println(); //Final newline
 }
 
     

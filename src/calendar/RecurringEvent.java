@@ -26,17 +26,25 @@ public class RecurringEvent {
     }
 
     // Getters & Setters
-    public int getEventId() { return eventId; }
-    public void setEventId(int eventId) { this.eventId = eventId; }
+    public int getEventId() { 
+        return eventId; }
+    public void setEventId(int eventId) { 
+        this.eventId = eventId; }
 
-    public String getRecurrentInterval() { return recurrentInterval; }
-    public void setRecurrentInterval(String recurrentInterval) { this.recurrentInterval = recurrentInterval; }
+    public String getRecurrentInterval() { 
+        return recurrentInterval; }
+    public void setRecurrentInterval(String recurrentInterval) { 
+        this.recurrentInterval = recurrentInterval; }
 
-    public int getRecurrentTimes() { return recurrentTimes; }
-    public void setRecurrentTimes(int recurrentTimes) { this.recurrentTimes = recurrentTimes; }
+    public int getRecurrentTimes() { 
+        return recurrentTimes; }
+    public void setRecurrentTimes(int recurrentTimes) { 
+        this.recurrentTimes = recurrentTimes; }
 
-    public LocalDateTime getRecurrentEndDate() { return recurrentEndDate; }
-    public void setRecurrentEndDate(LocalDateTime recurrentEndDate) { this.recurrentEndDate = recurrentEndDate; }
+    public LocalDateTime getRecurrentEndDate() { 
+        return recurrentEndDate; }
+    public void setRecurrentEndDate(LocalDateTime recurrentEndDate) { 
+        this.recurrentEndDate = recurrentEndDate; }
 
     // Nicely formatted string output
     @Override
@@ -47,8 +55,7 @@ public class RecurringEvent {
 
     // CSV export (using | delimiter for safety)
     public String toCSV() {
-        return eventId + "|" + recurrentInterval + "|" + recurrentTimes + "|" +
-               (recurrentEndDate != null ? recurrentEndDate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : "");
+        return eventId + "|" + recurrentInterval + "|" + recurrentTimes + "|" +(recurrentEndDate != null ? recurrentEndDate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : "");
     }
 
     // CSV import

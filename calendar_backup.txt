@@ -6,8 +6,12 @@
 5|Dating|First date|2026-02-28T19:00:00|2026-02-28T22:00:00
 6|Dating|First date|2026-03-07T19:00:00|2026-03-07T22:00:00
 7|Dating|First date|2026-03-14T19:00:00|2026-03-14T22:00:00
+8|Graduation|Matriculation graduation|2026-04-06T08:00:00|2026-04-06T12:00:00
+9|Futsal|Tournament|2026-04-03T15:00:00|2026-04-03T18:00:00
+10|Futsal|Tournament|2026-06-03T15:00:00|2026-06-03T18:00:00
 [RECURRING]
 3|1w|5|
+2|2m|3|
 [ADDITIONAL]
 eventId,location,attendees,category
 1,UM Library,Groupmates,None
@@ -17,3 +21,6 @@ eventId,location,attendees,category
 5,MyTown shopping mall,My girlfriend,None
 6,MyTown shopping mall,My girlfriend,None
 7,MyTown shopping mall,My girlfriend,None
+8,Graduation hall,Lecturers, friends,None
+9,Sports Planet,Coaches and players,Under 21
+10,Sports Planet,Coaches and players,Under 21
